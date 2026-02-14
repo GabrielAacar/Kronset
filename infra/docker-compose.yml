@@ -13,6 +13,13 @@ services:
   api:
     build:
       context: ../apps/api
+
+    environment:
+      DATABASE_URL: postgresql://kronset:kronset@db:5432/kronset
+
+      # EXEMPLO: datasource (pode ser o mesmo Postgres ou outro)
+      KRONSET_CONN_PG_DEMO: postgresql://kronset:kronset@db:5432/kronset
+    
     ports:
       - "8000:8000"
     depends_on:
