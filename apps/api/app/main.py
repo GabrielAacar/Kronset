@@ -7,7 +7,7 @@ from app.schemas import (
     DatasetCreate, DatasetOut,
     DimensionCreate, DimensionOut,
     MetricCreate, MetricOut,
-    QueryRequest, QueryResponse
+    QueryRequest, QueryResponse,QueryRequestV2, AdhocMetricDef
 )
 from app.connectors.registry import get_connector
 from app.query_builder import build_metric_sql, build_where, _apply_overrides
@@ -243,4 +243,78 @@ def run_query(payload: QueryRequest):
     connector = get_connector(dialect, conn["secret_ref"])
     rows = connector.run_query(sql, params)
 
+    return {"sql": sql.strip(), "rows": rows}
+
+@app.post("/query_v2", response_model=QueryResponse)
+def run_query_v2(payload: QueryRequestV2):
+    ds = meta_repo.fetch_one("SELECT * FROM datasets WHERE id=%(id)s", {"id": str(payload.dataset_id)})
+    if not ds:
+        raise HTTPException(404, "dataset not found")
+
+    conn = meta_repo.fetch_one("SELECT * FROM connections WHERE id=%(id)s", {"id": str(ds["connection_id"])})
+    if not conn:
+        raise HTTPException(500, "dataset connection missing")
+    if not conn["is_enabled"]:
+        raise HTTPException(403, "connection disabled")
+
+    dialect = conn["db_type"]
+    base_sql = _apply_overrides(ds.get("overrides") or {}, dialect, "base_sql", ds["base_sql"])
+
+    dims = meta_repo.fetch_all("SELECT * FROM dimensions WHERE dataset_id=%(id)s", {"id": str(ds["id"])})
+    mets = meta_repo.fetch_all("SELECT * FROM metrics WHERE dataset_id=%(id)s", {"id": str(ds["id"])})
+
+    dim_by_name = {d["name"]: d for d in dims}
+    met_by_name = {m["name"]: m for m in mets}
+
+    dim_expr_map: dict[str, str] = {}
+    select_dims: list[str] = []
+    group_by: list[str] = []
+
+    for dname in payload.dimensions:
+        d = dim_by_name.get(dname)
+        if not d:
+            raise HTTPException(400, f"dimension not found: {dname}")
+        expr = _apply_overrides(d.get("overrides") or {}, dialect, "expression", d["expression"])
+        dim_expr_map[dname] = expr
+        select_dims.append(f"{expr} AS \"{dname}\"")
+        group_by.append(expr)
+
+    select_mets: list[str] = []
+
+    for mref in payload.metrics:
+        if isinstance(mref, str):
+            m = met_by_name.get(mref)
+            if not m:
+                raise HTTPException(400, f"metric not found: {mref}")
+            mexpr = build_metric_sql(m["metric_type"], m["config"])
+            select_mets.append(f"{mexpr} AS \"{mref}\"")
+        else:
+            # adhoc metric
+            mexpr = build_metric_sql(mref.metric_type, mref.config)
+            select_mets.append(f"{mexpr} AS \"{mref.alias}\"")
+
+    if not select_dims and not select_mets:
+        raise HTTPException(400, "provide at least one metric or dimension")
+
+    where_sql, params = build_where(payload.filters, dim_expr_map)
+
+    select_list = ", ".join(select_dims + select_mets)
+    sql = f"""
+    WITH base AS (
+      {base_sql}
+    )
+    SELECT {select_list}
+    FROM base
+    {where_sql}
+    """
+
+    if group_by and select_mets:
+        sql += " GROUP BY " + ", ".join(group_by)
+
+    lim = max(1, min(payload.limit, 5000))
+    if dialect == "postgres":
+        sql += f" LIMIT {lim}"
+
+    connector = get_connector(dialect, conn["secret_ref"])
+    rows = connector.run_query(sql, params)
     return {"sql": sql.strip(), "rows": rows}

@@ -35,6 +35,13 @@ def build_metric_sql(metric_type: str, config: dict[str, Any]) -> str:
         num_sql = build_metric_sql(num["metric_type"], num["config"])
         den_sql = build_metric_sql(den["metric_type"], den["config"])
         return f"({num_sql}) / NULLIF(({den_sql}), 0)"
+    if metric_type == "min":
+        field = config["field"]
+        return f"MIN({field})"
+    if metric_type == "max":
+        field = config["field"]
+        return f"MAX({field})"
+
     raise ValueError(f"Unsupported metric_type: {metric_type}")
 
 def build_where(filters: list[QueryFilter], dim_expr_map: dict[str, str]) -> tuple[str, dict[str, Any]]:

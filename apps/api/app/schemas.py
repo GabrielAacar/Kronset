@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Union
 from uuid import UUID
+
 
 DbType = Literal["postgres", "oracle", "sqlserver"]
 
@@ -67,3 +68,17 @@ class QueryRequest(BaseModel):
 class QueryResponse(BaseModel):
     sql: str
     rows: list[dict[str, Any]]
+
+class AdhocMetricDef(BaseModel):
+    alias: str
+    metric_type: MetricType
+    config: dict[str, Any]
+
+MetricRef = Union[str, AdhocMetricDef]
+
+class QueryRequestV2(BaseModel):
+    dataset_id: UUID
+    metrics: list[MetricRef] = Field(default_factory=list)
+    dimensions: list[str] = Field(default_factory=list)
+    filters: list[QueryFilter] = Field(default_factory=list)
+    limit: int = 500
