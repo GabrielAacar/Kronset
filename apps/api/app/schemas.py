@@ -3,17 +3,28 @@ from typing import Any, Literal, Optional, Union
 from uuid import UUID
 
 
-DbType = Literal["postgres", "oracle", "sqlserver"]
+DbType = Literal["postgres", "oracle", "sqlserver", "mysql"]
+
+class ConnectionCredentials(BaseModel):
+    host: str
+    port: int = 5432
+    username: str
+    password: str
+    database: str
 
 class ConnectionCreate(BaseModel):
     name: str
     db_type: DbType
-    config: dict[str, Any] = Field(default_factory=dict)
-    secret_ref: str
+    credentials: ConnectionCredentials
     is_enabled: bool = True
 
-class ConnectionOut(ConnectionCreate):
-    id: UUID
+class ConnectionOut(BaseModel):
+    id: str
+    name: str
+    db_type: DbType
+    credentials: ConnectionCredentials
+    is_enabled: bool
+    created_at: str
 
 class DatasetCreate(BaseModel):
     connection_id: UUID
@@ -82,3 +93,55 @@ class QueryRequestV2(BaseModel):
     dimensions: list[str] = Field(default_factory=list)
     filters: list[QueryFilter] = Field(default_factory=list)
     limit: int = 500
+
+
+class DashboardHeader(BaseModel):
+    title: str = ""
+    logo_url: str = ""
+    description: str = ""
+
+class DashboardCreate(BaseModel):
+    name: str
+    description: str = ""
+    dataset_id: UUID
+    header: dict[str, Any] = Field(default_factory=dict)
+    layout: dict[str, Any] = Field(default_factory=dict)
+
+class DashboardOut(BaseModel):
+    id: UUID
+    name: str
+    description: str
+    dataset_id: UUID
+    header: dict[str, Any]
+    layout: dict[str, Any]
+    is_published: bool
+
+class DashboardUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    header: dict[str, Any] | None = None
+    layout: dict[str, Any] | None = None
+    is_published: bool | None = None
+
+class WidgetCreate(BaseModel):
+    dashboard_id: UUID
+    type: str
+    title: str = ""
+    query: dict[str, Any] = Field(default_factory=dict)
+    style: dict[str, Any] = Field(default_factory=dict)
+    layout: dict[str, Any] = Field(default_factory=dict)
+
+class WidgetOut(BaseModel):
+    id: UUID
+    dashboard_id: UUID
+    type: str
+    title: str
+    query: dict[str, Any]
+    style: dict[str, Any]
+    layout: dict[str, Any]
+
+class WidgetUpdate(BaseModel):
+    title: str | None = None
+    query: dict[str, Any] | None = None
+    style: dict[str, Any] | None = None
+    layout: dict[str, Any] | None = None
