@@ -34,6 +34,30 @@ export default function MainLayout() {
             >
               Connections
             </NavLink>
+            <NavLink
+              to="/datasets"
+              className={({ isActive }) =>
+                `app-sidebar__link${isActive ? " app-sidebar__link--active" : ""}`
+              }
+            >
+              Datasets
+            </NavLink>
+            <NavLink
+              to="/dimensions"
+              className={({ isActive }) =>
+                `app-sidebar__link${isActive ? " app-sidebar__link--active" : ""}`
+              }
+            >
+              Dimensoes
+            </NavLink>
+            <NavLink
+              to="/metrics"
+              className={({ isActive }) =>
+                `app-sidebar__link${isActive ? " app-sidebar__link--active" : ""}`
+              }
+            >
+              Metricas
+            </NavLink>
           </nav>
         </aside>
 

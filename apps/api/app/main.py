@@ -15,10 +15,16 @@ from app.connectors.registry import get_connector
 from app.query_builder import build_metric_sql, build_where, _apply_overrides
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.connections import connections_router
+from app.routers.datasets import datasets_router
+from app.routers.dimensions import dimensions_router
+from app.routers.metrics import metrics_router
 
 
 app = FastAPI(title="Kronset API", version="0.1.0")
 app.include_router(connections_router, prefix="/connections", tags=["connections"])
+app.include_router(datasets_router, prefix="/datasets", tags=["datasets"])
+app.include_router(dimensions_router, prefix="/dimensions", tags=["dimensions"])
+app.include_router(metrics_router, prefix="/metrics", tags=["metrics"])
 
 app.add_middleware(
     CORSMiddleware,
