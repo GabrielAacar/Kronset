@@ -10,7 +10,7 @@ connections_router = APIRouter()
 
 
 def _make_secret_ref(name: str) -> str:
-    return f"KRONSET_CONN_{name.upper().replace(' ', '_')}"
+    return f"KRONSET_CONN_{name.upper().replace(' ', '_').replace('-', '_')}"
 
 
 def _serialize_connection(row: dict) -> dict:

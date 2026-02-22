@@ -1,0 +1,170 @@
+.page {
+  display: grid;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.buttonPrimary {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.desc {
+  margin: 0;
+  color: #475569;
+  font-size: 13px;
+  min-height: 34px;
+}
+
+.meta {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.published {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.draft {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.empty,
+.error {
+  margin: 0;
+  font-size: 13px;
+}
+
+.empty {
+  color: #64748b;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  color: #334155;
+}
+
+.input,
+.select,
+.textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 14px;
+  background: #ffffff;
+}
+
+.textarea {
+  min-height: 84px;
+  resize: vertical;
+}

@@ -7,10 +7,8 @@ from app.schemas import (
     DatasetCreate, DatasetOut,
     DimensionCreate, DimensionOut,
     MetricCreate, MetricOut,
-    QueryRequest, QueryResponse,QueryRequestV2, AdhocMetricDef,
-    DashboardCreate, DashboardOut, DashboardUpdate, WidgetCreate, WidgetOut, WidgetUpdate
+    QueryRequest, QueryResponse,QueryRequestV2, AdhocMetricDef
 )
-import json
 from app.connectors.registry import get_connector
 from app.query_builder import build_metric_sql, build_where, _apply_overrides
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +16,8 @@ from app.routers.connections import connections_router
 from app.routers.datasets import datasets_router
 from app.routers.dimensions import dimensions_router
 from app.routers.metrics import metrics_router
+from app.routers.dashboards import dashboards_router
+from app.routers.widgets import widgets_router
 
 
 app = FastAPI(title="Kronset API", version="0.1.0")
@@ -25,6 +25,8 @@ app.include_router(connections_router, prefix="/connections", tags=["connections
 app.include_router(datasets_router, prefix="/datasets", tags=["datasets"])
 app.include_router(dimensions_router, prefix="/dimensions", tags=["dimensions"])
 app.include_router(metrics_router, prefix="/metrics", tags=["metrics"])
+app.include_router(dashboards_router, prefix="/dashboards", tags=["dashboards"])
+app.include_router(widgets_router, prefix="/widgets", tags=["widgets"])
 
 app.add_middleware(
     CORSMiddleware,
@@ -204,11 +206,18 @@ def run_query(payload: QueryRequest):
     dim_by_name = {d["name"]: d for d in dims}
     met_by_name = {m["name"]: m for m in mets}
 
+    series_items = getattr(payload, "series", None) or []
+    metric_names = [s.get("metric") for s in series_items if isinstance(s, dict) and s.get("metric")]
+    if not metric_names:
+        metric_names = payload.metrics
+
+    dimension_names = [payload.dimension] if getattr(payload, "dimension", None) else payload.dimensions
+
     # resolve dimension expressions
     dim_expr_map: dict[str, str] = {}
     select_dims: list[str] = []
     group_by: list[str] = []
-    for dname in payload.dimensions:
+    for dname in dimension_names:
         d = dim_by_name.get(dname)
         if not d:
             raise HTTPException(400, f"dimension not found: {dname}")
@@ -220,7 +229,7 @@ def run_query(payload: QueryRequest):
 
     # resolve metric SQL
     select_mets: list[str] = []
-    for mname in payload.metrics:
+    for mname in metric_names:
         m = met_by_name.get(mname)
         if not m:
             raise HTTPException(400, f"metric not found: {mname}")
@@ -329,149 +338,3 @@ def run_query_v2(payload: QueryRequestV2):
     rows = connector.run_query(sql, params)
     return {"sql": sql.strip(), "rows": rows}
 
-# ---------------- Dashboards ----------------
-
-@app.get("/dashboards", response_model=list[DashboardOut])
-def list_dashboards():
-    rows = meta_repo.fetch_all("""
-      SELECT id, name, description, dataset_id, header, layout, is_published
-      FROM dashboards
-      ORDER BY updated_at DESC
-    """)
-    return rows
-
-@app.post("/dashboards", response_model=DashboardOut)
-def create_dashboard(payload: DashboardCreate):
-    did = str(uuid4())
-    meta_repo.execute("""
-      INSERT INTO dashboards (id, name, description, dataset_id, header, layout)
-      VALUES (%(id)s, %(name)s, %(description)s, %(dataset_id)s, %(header)s::jsonb, %(layout)s::jsonb)
-    """, {
-        "id": did,
-        "name": payload.name,
-        "description": payload.description,
-        "dataset_id": str(payload.dataset_id),
-        "header": json.dumps(payload.header or {}),
-        "layout": json.dumps(payload.layout or {"template": "standard"}),
-    })
-    row = meta_repo.fetch_one("""
-      SELECT id, name, description, dataset_id, header, layout, is_published
-      FROM dashboards WHERE id=%(id)s
-    """, {"id": did})
-    return row
-
-@app.get("/dashboards/{dashboard_id}", response_model=DashboardOut)
-def get_dashboard(dashboard_id: UUID):
-    row = meta_repo.fetch_one("""
-      SELECT id, name, description, dataset_id, header, layout, is_published
-      FROM dashboards WHERE id=%(id)s
-    """, {"id": str(dashboard_id)})
-    if not row:
-        raise HTTPException(404, "dashboard not found")
-    return row
-
-@app.patch("/dashboards/{dashboard_id}", response_model=DashboardOut)
-def update_dashboard(dashboard_id: UUID, payload: DashboardUpdate):
-    current = meta_repo.fetch_one("SELECT * FROM dashboards WHERE id=%(id)s", {"id": str(dashboard_id)})
-    if not current:
-        raise HTTPException(404, "dashboard not found")
-
-    name = payload.name if payload.name is not None else current["name"]
-    description = payload.description if payload.description is not None else current["description"]
-    header = payload.header if payload.header is not None else current["header"]
-    layout = payload.layout if payload.layout is not None else current["layout"]
-    is_published = payload.is_published if payload.is_published is not None else current["is_published"]
-
-    meta_repo.execute("""
-      UPDATE dashboards
-      SET name=%(name)s,
-          description=%(description)s,
-          header=%(header)s::jsonb,
-          layout=%(layout)s::jsonb,
-          is_published=%(is_published)s
-      WHERE id=%(id)s
-    """, {
-        "id": str(dashboard_id),
-        "name": name,
-        "description": description,
-        "header": json.dumps(header or {}),
-        "layout": json.dumps(layout or {}),
-        "is_published": is_published,
-    })
-
-    row = meta_repo.fetch_one("""
-      SELECT id, name, description, dataset_id, header, layout, is_published
-      FROM dashboards WHERE id=%(id)s
-    """, {"id": str(dashboard_id)})
-    return row
-
-# ---------------- Widgets ----------------
-
-@app.get("/dashboards/{dashboard_id}/widgets", response_model=list[WidgetOut])
-def list_widgets(dashboard_id: UUID):
-    rows = meta_repo.fetch_all("""
-      SELECT id, dashboard_id, type, title, query, style, layout
-      FROM dashboard_widgets
-      WHERE dashboard_id=%(dashboard_id)s
-      ORDER BY created_at ASC
-    """, {"dashboard_id": str(dashboard_id)})
-    return rows
-
-@app.post("/widgets", response_model=WidgetOut)
-def create_widget(payload: WidgetCreate):
-    wid = str(uuid4())
-    meta_repo.execute("""
-      INSERT INTO dashboard_widgets (id, dashboard_id, type, title, query, style, layout)
-      VALUES (%(id)s, %(dashboard_id)s, %(type)s, %(title)s,
-              %(query)s::jsonb, %(style)s::jsonb, %(layout)s::jsonb)
-    """, {
-        "id": wid,
-        "dashboard_id": str(payload.dashboard_id),
-        "type": payload.type,
-        "title": payload.title or "",
-        "query": json.dumps(payload.query or {}),
-        "style": json.dumps(payload.style or {}),
-        "layout": json.dumps(payload.layout or {}),
-    })
-    row = meta_repo.fetch_one("""
-      SELECT id, dashboard_id, type, title, query, style, layout
-      FROM dashboard_widgets WHERE id=%(id)s
-    """, {"id": wid})
-    return row
-
-@app.patch("/widgets/{widget_id}", response_model=WidgetOut)
-def update_widget(widget_id: UUID, payload: WidgetUpdate):
-    cur = meta_repo.fetch_one("SELECT * FROM dashboard_widgets WHERE id=%(id)s", {"id": str(widget_id)})
-    if not cur:
-        raise HTTPException(404, "widget not found")
-
-    title = payload.title if payload.title is not None else cur["title"]
-    query = payload.query if payload.query is not None else cur["query"]
-    style = payload.style if payload.style is not None else cur["style"]
-    layout = payload.layout if payload.layout is not None else cur["layout"]
-
-    meta_repo.execute("""
-      UPDATE dashboard_widgets
-      SET title=%(title)s,
-          query=%(query)s::jsonb,
-          style=%(style)s::jsonb,
-          layout=%(layout)s::jsonb
-      WHERE id=%(id)s
-    """, {
-        "id": str(widget_id),
-        "title": title,
-        "query": json.dumps(query or {}),
-        "style": json.dumps(style or {}),
-        "layout": json.dumps(layout or {}),
-    })
-
-    row = meta_repo.fetch_one("""
-      SELECT id, dashboard_id, type, title, query, style, layout
-      FROM dashboard_widgets WHERE id=%(id)s
-    """, {"id": str(widget_id)})
-    return row
-
-@app.delete("/widgets/{widget_id}")
-def delete_widget(widget_id: UUID):
-    meta_repo.execute("DELETE FROM dashboard_widgets WHERE id=%(id)s", {"id": str(widget_id)})
-    return {"ok": True}

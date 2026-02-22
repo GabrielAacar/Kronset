@@ -1,0 +1,275 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(2px);
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.panel {
+  width: min(800px, calc(100vw - 24px));
+  max-height: 90vh;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  z-index: 71;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.closeBtn {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.body {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 320px);
+  gap: 12px;
+  align-items: stretch;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.section {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.row {
+  display: grid;
+  gap: 6px;
+}
+
+.rowInline {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  color: #475569;
+}
+
+.input,
+.select {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.templatePreview {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+  background: #f8fafc;
+  font-size: 12px;
+  color: #475569;
+}
+
+.leftColumn {
+  align-content: start;
+  min-width: 0;
+  overflow: auto;
+  height: 100%;
+}
+
+.rightColumn {
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  overflow: hidden;
+  height: 100%;
+}
+
+.propertiesWrap {
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+  padding-right: 2px;
+  box-sizing: border-box;
+}
+
+.templateButtons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.templateBtn {
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 8px 6px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.templateBtn:hover {
+  border-color: #93c5fd;
+  background: #f8fbff;
+}
+
+.templateBtnActive {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  background: #eff6ff;
+}
+
+.templateIcon {
+  display: block;
+  line-height: 0;
+}
+
+.templateBtnLabel {
+  font-size: 12px;
+  color: #334155;
+  font-weight: 600;
+}
+
+.filterCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+  background: #f8fafc;
+}
+
+.filterHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.filterTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.iconBtn {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  color: #ef4444;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  justify-content: end;
+}
+
+.button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  background: #ffffff;
+}
+
+.buttonPrimary {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.error {
+  margin: 0;
+  font-size: 12px;
+  color: #b91c1c;
+}
+
+@media (max-width: 860px) {
+  .panel {
+    width: min(800px, calc(100vw - 16px));
+    max-height: calc(100vh - 16px);
+  }
+
+  .columns {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .leftColumn,
+  .rightColumn {
+    height: auto;
+  }
+
+  .propertiesWrap {
+    height: auto;
+    max-height: 45vh;
+  }
+}

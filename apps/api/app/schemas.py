@@ -73,6 +73,8 @@ class QueryRequest(BaseModel):
     dataset_id: UUID
     metrics: list[str] = Field(default_factory=list)      # nomes de métricas
     dimensions: list[str] = Field(default_factory=list)   # nomes de dimensões
+    series: list[dict[str, Any]] = Field(default_factory=list)
+    dimension: str | None = None
     filters: list[QueryFilter] = Field(default_factory=list)
     limit: int = 500
 
@@ -106,15 +108,18 @@ class DashboardCreate(BaseModel):
     dataset_id: UUID
     header: dict[str, Any] = Field(default_factory=dict)
     layout: dict[str, Any] = Field(default_factory=dict)
+    slug: str = ""
 
 class DashboardOut(BaseModel):
-    id: UUID
+    id: str
     name: str
     description: str
-    dataset_id: UUID
+    dataset_id: str
     header: dict[str, Any]
     layout: dict[str, Any]
     is_published: bool
+    slug: str
+    created_at: str
 
 class DashboardUpdate(BaseModel):
     name: str | None = None

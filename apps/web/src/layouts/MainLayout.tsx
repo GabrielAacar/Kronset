@@ -58,6 +58,14 @@ export default function MainLayout() {
             >
               Metricas
             </NavLink>
+            <NavLink
+              to="/dashboards"
+              className={({ isActive }) =>
+                `app-sidebar__link${isActive ? " app-sidebar__link--active" : ""}`
+              }
+            >
+              Dashboards
+            </NavLink>
           </nav>
         </aside>
 

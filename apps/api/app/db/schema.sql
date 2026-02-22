@@ -41,3 +41,26 @@ CREATE TABLE IF NOT EXISTS metrics (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(dataset_id, name)
 );
+
+CREATE TABLE IF NOT EXISTS dashboards (
+  id           UUID PRIMARY KEY,
+  name         TEXT NOT NULL UNIQUE,
+  description  TEXT DEFAULT '',
+  dataset_id   UUID NOT NULL REFERENCES datasets(id) ON DELETE RESTRICT,
+  header       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  layout       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_published BOOLEAN NOT NULL DEFAULT FALSE,
+  slug         TEXT UNIQUE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS widgets (
+  id           UUID PRIMARY KEY,
+  dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+  type         TEXT NOT NULL,
+  title        TEXT DEFAULT '',
+  query        JSONB NOT NULL DEFAULT '{}'::jsonb,
+  style        JSONB NOT NULL DEFAULT '{}'::jsonb,
+  layout       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
